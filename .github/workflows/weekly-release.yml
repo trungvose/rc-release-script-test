@@ -2,8 +2,10 @@ name: Weekly Release
 
 on:
   # schedule:
-  #   # Every Monday at 4:00 PM SGT (8:00 AM UTC)
-  #   - cron: "0 8 * * 1"
+  #   - cron: "0 8 * * 1" # bank1 - Monday 4:00 PM SGT
+  #   - cron: "0 8 * * 2" # bank2 - Tuesday 4:00 PM SGT
+  #   - cron: "0 8 * * 3" # loyalty1 - Wednesday 4:00 PM SGT
+  #   - cron: "0 8 * * 4" # loyalty2 - Thursday 4:00 PM SGT
   workflow_dispatch:
     inputs:
       cluster:
@@ -36,16 +38,37 @@ jobs:
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
 
+      # Determine cluster from manual input or schedule.
+      # Each cron expression maps to a specific cluster.
+      - name: Determine cluster
+        id: cluster
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "name=${{ github.event.inputs.cluster }}" >> "$GITHUB_OUTPUT"
+          else
+            case "${{ github.event.schedule }}" in
+              "0 8 * * 1") echo "name=bank1" >> "$GITHUB_OUTPUT" ;;
+              "0 8 * * 2") echo "name=bank2" >> "$GITHUB_OUTPUT" ;;
+              "0 8 * * 3") echo "name=loyalty1" >> "$GITHUB_OUTPUT" ;;
+              "0 8 * * 4") echo "name=loyalty2" >> "$GITHUB_OUTPUT" ;;
+            esac
+          fi
+          echo "Cluster: ${{ steps.cluster.outputs.name || 'determining...' }}"
+
       # Runs actual release for: schedule trigger, or manual trigger with dry run unchecked.
       # Any other event (e.g. pull_request) will skip both steps and do nothing.
       - name: Release
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true' || github.event_name == 'schedule' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/release ${{ github.event.inputs.cluster || 'bank1' }}
+        run: |
+          echo "Releasing cluster: ${{ steps.cluster.outputs.name }}"
+          ./scripts/release ${{ steps.cluster.outputs.name }}
 
       - name: Dry Run Release
         if: ${{ github.event.inputs.dry_run == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/release ${{ github.event.inputs.cluster || 'bank1' }} --dry-run
+        run: |
+          echo "Dry run for cluster: ${{ steps.cluster.outputs.name }}"
+          ./scripts/release ${{ steps.cluster.outputs.name }} --dry-run
