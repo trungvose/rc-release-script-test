@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+VALID_CLUSTERS="bank1 bank2 loyalty1 loyalty2"
+
+clusters=()
+dry_run=false
+for arg in "$@"; do
+    if [ "$arg" = "--dry-run" ] || [ "$arg" = "dry-run" ]; then
+        dry_run=true
+    else
+        found=false
+        for valid in $VALID_CLUSTERS; do
+            if [ "$arg" = "$valid" ]; then
+                found=true
+                break
+            fi
+        done
+        if ! $found; then
+            echo "[ERROR] Invalid cluster name: $arg"
+            echo "Valid clusters are: $VALID_CLUSTERS"
+            exit 1
+        fi
+        clusters+=("$arg")
+    fi
+done
+
+if [ ${#clusters[@]} -eq 0 ]; then
+    echo "[ERROR] At least one cluster name is required."
+    echo "Usage: $0 <cluster> [--dry-run]"
+    echo "Valid clusters are: $VALID_CLUSTERS"
+    exit 1
+fi
+
+for cluster in "${clusters[@]}"; do
+    echo "===================================="
+    echo "[$cluster] Starting release cut..."
+    echo "===================================="
+
+    if $dry_run; then
+        echo "[DRY RUN] Would create tag for $cluster"
+        echo "[DRY RUN] Would push tag for $cluster"
+        echo "[DRY RUN] Would create GitHub release for $cluster"
+    else
+        echo "[$cluster] Creating tag..."
+        echo "[$cluster] Pushing tag..."
+        echo "[$cluster] Creating GitHub release..."
+    fi
+
+    echo "[$cluster] Release cut completed."
+done

@@ -1,0 +1,43 @@
+name: Weekly Release
+
+on:
+  # schedule:
+  #   # Every Monday at 4:00 PM SGT (8:00 AM UTC)
+  #   - cron: "0 8 * * 1"
+  workflow_dispatch:
+    inputs:
+      cluster:
+        description: "Cluster to release"
+        required: true
+        default: "bank1"
+        type: choice
+        options:
+          - bank1
+          - bank2
+          - loyalty1
+          - loyalty2
+      dry_run:
+        description: "Dry run (preview only, no tags/releases created)"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Release
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/release ${{ github.event.inputs.cluster || 'bank1' }}
+
+      - name: Dry Run Release
+        if: ${{ github.event.inputs.dry_run == 'true' || github.event_name != 'workflow_dispatch' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/release ${{ github.event.inputs.cluster || 'bank1' }} --dry-run
