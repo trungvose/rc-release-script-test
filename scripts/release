@@ -48,5 +48,8 @@ for cluster in "${clusters[@]}"; do
         echo "[$cluster] Creating GitHub release..."
     fi
 
+    # Skip opening browser in CI
+    [ -z "$CI" ] && echo "Opening Jenkins URL in browser..." || echo "Skipping browser open (CI environment)"
+
     echo "[$cluster] Release cut completed."
 done

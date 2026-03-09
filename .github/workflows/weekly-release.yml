@@ -32,17 +32,19 @@ jobs:
 
       - name: Configure Git identity
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
 
+      # Runs actual release for: schedule trigger, or manual trigger with dry run unchecked.
+      # Any other event (e.g. pull_request) will skip both steps and do nothing.
       - name: Release
-        if: ${{ github.event.inputs.dry_run != 'true' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true' || github.event_name == 'schedule' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./scripts/release ${{ github.event.inputs.cluster || 'bank1' }}
 
       - name: Dry Run Release
-        if: ${{ github.event.inputs.dry_run == 'true' || github.event_name != 'workflow_dispatch' }}
+        if: ${{ github.event.inputs.dry_run == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./scripts/release ${{ github.event.inputs.cluster || 'bank1' }} --dry-run
