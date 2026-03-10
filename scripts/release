@@ -50,7 +50,6 @@ for cluster in "${clusters[@]}"; do
 
     echo "[$cluster] Release cut completed."
 
-    # This is the last command - will exit with code 1 in CI
-    # because [ -z "$CI" ] returns false (exit code 1)
-    [ -z "$CI" ] && echo "Opening Jenkins URL in browser..."
+    # || true prevents exit code 1 in CI when [ -z "$CI" ] returns false
+    [ -z "$CI" ] && echo "Opening Jenkins URL in browser..." || true
 done
