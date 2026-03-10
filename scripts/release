@@ -48,9 +48,9 @@ for cluster in "${clusters[@]}"; do
         echo "[$cluster] Creating GitHub release..."
     fi
 
-    # This will fail in CI because [ -z "$CI" ] returns exit code 1
-    # and set -euo pipefail will kill the script
-    [ -z "$CI" ] && echo "Opening Jenkins URL in browser..."
-
     echo "[$cluster] Release cut completed."
+
+    # This is the last command - will exit with code 1 in CI
+    # because [ -z "$CI" ] returns false (exit code 1)
+    [ -z "$CI" ] && echo "Opening Jenkins URL in browser..."
 done
