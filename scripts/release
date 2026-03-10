@@ -48,8 +48,9 @@ for cluster in "${clusters[@]}"; do
         echo "[$cluster] Creating GitHub release..."
     fi
 
-    # Skip opening browser in CI
-    [ -z "$CI" ] && echo "Opening Jenkins URL in browser..." || echo "Skipping browser open (CI environment)"
+    # This will fail in CI because [ -z "$CI" ] returns exit code 1
+    # and set -euo pipefail will kill the script
+    [ -z "$CI" ] && echo "Opening Jenkins URL in browser..."
 
     echo "[$cluster] Release cut completed."
 done
